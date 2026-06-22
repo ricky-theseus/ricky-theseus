@@ -39,84 +39,93 @@ function generateSVG(weeks, total) {
   const gridW = cols * (CELL + GAP);
   const gridH = rows * (CELL + GAP);
   const gridX = Math.floor((W - gridW) / 2);
-  const gridY = H - gridH - 40;
+  const gridY = 65;
+  const PLANE_Y = 310;
+  const COL_TIME = 2.5;
 
   const maxCount = Math.max(1, ...weeks.flatMap(w => w.contributionDays.map(d => d.contributionCount)));
+  const cycleDur = cols * COL_TIME;
 
   function cellColor(count) {
     if (count === 0) return '#161b22';
     const i = Math.min(count / Math.max(maxCount, 1), 1);
-    const r = Math.round(9 + i * 57);
-    const g = Math.round(110 + i * 127);
-    const b = Math.round(90 + i * 107);
-    return `rgb(${r},${g},${b})`;
+    return `rgb(${Math.round(9 + i * 57)},${Math.round(110 + i * 127)},${Math.round(90 + i * 107)})`;
   }
 
-  let cells = '';
-  let targets = '';
-  let explosions = '';
+  let cells = '', bullets = '', explosions = '';
+  let hasHits = false;
 
   weeks.slice(0, cols).forEach((w, col) => {
+    const cx = gridX + col * (CELL + GAP) + CELL / 2;
+    let rowHitDelay = 0;
     w.contributionDays.forEach((d, row) => {
-      const x = gridX + col * (CELL + GAP);
-      const y = gridY + row * (CELL + GAP);
+      const rx = gridX + col * (CELL + GAP);
+      const ry = gridY + row * (CELL + GAP);
       const count = d.contributionCount;
-      cells += `<rect x="${x}" y="${y}" width="${CELL}" height="${CELL}" rx="2" fill="${cellColor(count)}">
-        <title>${d.date}: ${count} contributions</title>
+      cells += `<rect x="${rx}" y="${ry}" width="${CELL}" height="${CELL}" rx="2" fill="${cellColor(count)}">
+        <title>${d.date}: ${count}</title>
       </rect>\n`;
       if (count > 0) {
-        const delay = (col * 0.05 + row * 0.02).toFixed(2);
-        targets += `<rect x="${x-1}" y="${y-1}" width="${CELL+2}" height="${CELL+2}" rx="3" fill="none" stroke="#ff6e6e" stroke-width="0.5" opacity="0" class="target" style="animation:targetIn ${(1+count/3).toFixed(1)}s ${delay}s infinite">
-          <animate attributeName="opacity" values="0;0.6;0" dur="${(1.5+count/2).toFixed(1)}s" begin="${delay}s" repeatCount="indefinite"/>
+        hasHits = true;
+        const t = col * COL_TIME + rowHitDelay;
+        const bulletEndY = ry + CELL / 2;
+
+        bullets += `<rect x="${cx - 1}" y="${PLANE_Y}" width="2" height="6" rx="1" fill="#fff700" filter="url(#glow)">
+          <animate attributeName="y" values="${PLANE_Y};${bulletEndY}" dur="0.5s" begin="${t.toFixed(1)}s" fill="freeze"/>
+          <animate attributeName="opacity" values="1;1;0" keyTimes="0;0.7;1" dur="0.7s" begin="${t.toFixed(1)}s" fill="freeze"/>
         </rect>\n`;
-        explosions += `<circle cx="${x+CELL/2}" cy="${y+CELL/2}" r="${CELL/2}" fill="none" stroke="#ff6e6e" stroke-width="1" opacity="0" class="explode">
-          <animate attributeName="r" values="${CELL/2};${CELL*1.5};0" dur="0.8s" begin="${delay}s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0;0.8;0" dur="0.8s" begin="${delay}s" repeatCount="indefinite"/>
+
+        explosions += `<circle cx="${cx}" cy="${bulletEndY}" r="2" fill="none" stroke="#ff4444" stroke-width="2">
+          <animate attributeName="r" values="2;${CELL * 1.2};0" dur="0.6s" begin="${(t + 0.4).toFixed(1)}s" fill="freeze"/>
+          <animate attributeName="opacity" values="1;0.8;0" dur="0.6s" begin="${(t + 0.4).toFixed(1)}s" fill="freeze"/>
         </circle>\n`;
-        explosions += `<circle cx="${x+CELL/2}" cy="${y+CELL/2}" r="2" fill="#ffe066" opacity="0" class="spark">
-          <animate attributeName="opacity" values="0;1;0" dur="0.4s" begin="${delay}s" repeatCount="indefinite"/>
-          <animate attributeName="r" values="1;3;0" dur="0.4s" begin="${delay}s" repeatCount="indefinite"/>
+        explosions += `<circle cx="${cx}" cy="${bulletEndY}" r="1" fill="#ffe066">
+          <animate attributeName="r" values="1;4;0" dur="0.5s" begin="${(t + 0.4).toFixed(1)}s" fill="freeze"/>
+          <animate attributeName="opacity" values="1;0.6;0" dur="0.5s" begin="${(t + 0.4).toFixed(1)}s" fill="freeze"/>
         </circle>\n`;
+
+        rowHitDelay += 0.6;
       }
     });
   });
 
+  let planeAnims = '';
+  if (cols > 0) {
+    let values = [], times = [];
+    weeks.slice(0, cols).forEach((w, col) => {
+      const px = gridX + col * (CELL + GAP) + CELL / 2;
+      const t0 = (col * COL_TIME / cycleDur).toFixed(3);
+      const stay = ((col * COL_TIME + COL_TIME * 0.85) / cycleDur).toFixed(3);
+      if (col === 0) {
+        values.push(`${px},0`);
+        times.push('0');
+      }
+      values.push(`${px},0`);
+      times.push(stay);
+      if (col < cols - 1) {
+        const nextPx = gridX + (col + 1) * (CELL + GAP) + CELL / 2;
+        const mvTime = ((col * COL_TIME + COL_TIME) / cycleDur).toFixed(3);
+        values.push(`${nextPx},0`);
+        times.push(mvTime);
+      }
+    });
+    const lastT = '1';
+    values.push(`${gridX + (cols - 1) * (CELL + GAP) + CELL / 2},0`);
+    times.push(lastT);
+
+    planeAnims = `<animateTransform attributeName="transform" type="translate" values="${values.join('; ')}" keyTimes="${times.join('; ')}" dur="${cycleDur}s" repeatCount="indefinite"/>`;
+  }
+
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" height="100%">
   <defs>
     <style>
-      @keyframes fly {
-        0% { transform: translate(-120px, 0); }
-        100% { transform: translate(920px, 0); }
-      }
-      @keyframes targetFade {
-        0%, 100% { opacity: 0; }
-        50% { opacity: 0.8; }
-      }
-      @keyframes bullet {
-        0% { transform: translate(0, 0); opacity: 1; }
-        100% { transform: translate(0, 60px); opacity: 0; }
-      }
-      @keyframes explodeAnim {
-        0% { transform: scale(0.5); opacity: 1; }
-        100% { transform: scale(2.5); opacity: 0; }
-      }
-      .plane { animation: fly 4s linear infinite; }
-      .bullet:nth-child(1) { animation: bullet 0.6s ease-in infinite; }
-      .bullet:nth-child(2) { animation: bullet 0.6s ease-in 0.3s infinite; }
-      @keyframes starTwinkle {
-        0%, 100% { opacity: 0.2; }
-        50% { opacity: 0.8; }
-      }
-      .star { animation: starTwinkle ${2 + Math.random() * 3}s ease-in-out infinite; }
+      @keyframes starTwinkle { 0%,100% { opacity: 0.15; } 50% { opacity: 0.7; } }
+      .star { animation: starTwinkle 4s ease-in-out infinite; }
     </style>
     <radialGradient id="bg" cx="50%" cy="100%" r="80%">
       <stop offset="0%" stop-color="#1a2332"/>
       <stop offset="100%" stop-color="#0d1117"/>
     </radialGradient>
-    <linearGradient id="bulletGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fff700"/>
-      <stop offset="100%" stop-color="#ff6e00"/>
-    </linearGradient>
     <filter id="glow">
       <feGaussianBlur stdDeviation="2" result="blur"/>
       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
@@ -124,16 +133,14 @@ function generateSVG(weeks, total) {
   </defs>
   <rect width="${W}" height="${H}" fill="url(#bg)"/>
   ${generateStars(W, H)}
-  <text x="${W/2}" y="30" text-anchor="middle" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="18" font-weight="bold">🚀 Contribution Battle</text>
-  <text x="${W/2}" y="50" text-anchor="middle" fill="#8b949e" font-family="system-ui,sans-serif" font-size="12">${total} contributions in the last year</text>
-  <g class="plane" filter="url(#glow)">
-    ${generateAirplane()}
-    <g class="bullets">${generateBullets()}</g>
-  </g>
+  <text x="${W/2}" y="28" text-anchor="middle" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="16" font-weight="bold">🚀 Contribution Battle</text>
+  <text x="${W/2}" y="46" text-anchor="middle" fill="#8b949e" font-family="system-ui,sans-serif" font-size="11">${total} contributions in the last year</text>
   <g id="grid">${cells}</g>
-  <g id="effects">
-    ${targets}
-    ${explosions}
+  <g id="bullets" filter="url(#glow)">${bullets}</g>
+  <g id="explosions">${explosions}</g>
+  <g id="plane">
+    <g>${airplaneSVG()}
+    ${planeAnims}</g>
   </g>
 </svg>`;
   return svg;
@@ -142,43 +149,34 @@ function generateSVG(weeks, total) {
 function generateStars(W, H) {
   let stars = '';
   const positions = [];
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 40; i++) {
     let x, y, key;
     do {
       x = Math.floor(Math.random() * W);
-      y = Math.floor(Math.random() * (H * 0.6));
+      y = Math.floor(Math.random() * (H * 0.55));
       key = `${x},${y}`;
     } while (positions.includes(key));
     positions.push(key);
-    const r = Math.random() * 1.5 + 0.5;
-    const delay = (Math.random() * 3).toFixed(2);
-    const dur = (2 + Math.random() * 3).toFixed(1);
+    const r = Math.random() * 1.2 + 0.3;
+    const delay = (Math.random() * 4).toFixed(2);
+    const dur = (3 + Math.random() * 3).toFixed(1);
     stars += `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" class="star" style="animation-delay:${delay}s;animation-duration:${dur}s"/>\n`;
   }
   return stars;
 }
 
-function generateAirplane() {
-  return `<g transform="translate(50, 80)">
-    <path d="M0,0 L15,-8 L12,0 L15,8 Z" fill="#58a6ff"/>
-    <rect x="4" y="-1" width="10" height="2" rx="1" fill="#1f6feb"/>
-    <path d="M8,-3 L10,-10 L12,-3" fill="#58a6ff" opacity="0.6"/>
-    <path d="M2,-2 L0,-8 L5,-2" fill="#58a6ff" opacity="0.4"/>
-    <path d="M2,2 L0,8 L5,2" fill="#58a6ff" opacity="0.4"/>
-    <path d="M6,0 L8,-2 L8,2 Z" fill="#fff" opacity="0.8"/>
-    <circle cx="6" cy="0" r="1.5" fill="#ffe066"/>
-    <ellipse cx="14" cy="0" rx="4" ry="1.5" fill="#58a6ff" opacity="0.5"/>
+function airplaneSVG() {
+  return `<g transform="translate(0, ${PLANE_Y})">
+    <path d="M0,-12 L-6,4 L-2,2 L0,8 L2,2 L6,4 Z" fill="#58a6ff"/>
+    <path d="M0,-12 L-2,2 L0,8 L2,2 Z" fill="#1f6feb"/>
+    <path d="M-6,4 L-10,8 L-2,2" fill="#58a6ff" opacity="0.5"/>
+    <path d="M6,4 L10,8 L2,2" fill="#58a6ff" opacity="0.5"/>
+    <path d="M0,-4 L-1,1 L1,1 Z" fill="#ffe066" opacity="0.9"/>
+    <ellipse cx="0" cy="-10" rx="3" ry="2" fill="#79c0ff" opacity="0.3"/>
   </g>`;
 }
 
-function generateBullets() {
-  let bullets = '';
-  for (let i = 0; i < 2; i++) {
-    const delay = (i * 0.3).toFixed(1);
-    bullets += `<rect x="${45 + i * 3}" y="95" width="2" height="10" rx="1" fill="url(#bulletGrad)" class="bullet" style="animation-delay:${delay}s;filter:url(#glow)"/>\n`;
-  }
-  return bullets;
-}
+const PLANE_Y = 310;
 
 async function main() {
   const data = await fetchContributions(USER);
