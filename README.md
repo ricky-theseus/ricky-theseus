@@ -18,9 +18,9 @@
 
 ![GitHub stats](https://github-readme-stats.vercel.app/api?username=ricky-theseus&show_icons=true&theme=dark)
 
-## 🐍 Contribution Snake
+## 🚀 Contribution Battle
 
-![snake](https://raw.githubusercontent.com/ricky-theseus/ricky-theseus/output/github-contribution-grid-snake-dark.svg)
+![airplane battle](https://raw.githubusercontent.com/ricky-theseus/ricky-theseus/output/airplane-battle-dark.svg)
 
 ## 📝 Blog Posts (CSDN)
 
