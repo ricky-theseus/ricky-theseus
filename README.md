@@ -5,6 +5,7 @@
 [![CSDN](https://img.shields.io/badge/CSDN-Ricky__Theseus-CF0000?style=flat-square&logo=csdn&logoColor=white)](https://blog.csdn.net/Rick_Theseusr)
 [![知乎](https://img.shields.io/badge/知乎-ricky--26--41--65-0079FF?style=flat-square&logo=zhihu&logoColor=white)](https://www.zhihu.com/people/ricky-26-41-65)
 [![GitHub](https://img.shields.io/badge/GitHub-ricky--theseus-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/ricky-theseus)
+[![Gitee](https://img.shields.io/badge/Gitee-ricky--theseus-C71D23?style=flat-square&logo=gitee&logoColor=white)](https://gitee.com/ricky-theseus)
 
 ## 🛠️ Tech Stack
 
@@ -18,9 +19,9 @@
 
 ![GitHub stats](https://github-readme-stats.vercel.app/api?username=ricky-theseus&show_icons=true&theme=dark)
 
-## 🚀 Contribution Battle
+## 🐍 Contribution Snake
 
-![airplane battle](https://raw.githubusercontent.com/ricky-theseus/ricky-theseus/output/airplane-battle-dark.svg)
+![snake](https://raw.githubusercontent.com/ricky-theseus/ricky-theseus/output/github-snake-dark.svg?palette=github-dark)
 
 ## 📝 Blog Posts (CSDN)
 
@@ -30,10 +31,3 @@
 - [静态链接与动态链接](https://blog.csdn.net/Rick_Theseusr/article/details/160017651)
 - [C++编译全流程](https://blog.csdn.net/Rick_Theseusr/article/details/159986024)
 
-## 📌 Projects
-
-- [**DaisyCode**](https://github.com/ricky-theseus/DaisyCode) — TypeScript project
-- [**flying**](https://github.com/ricky-theseus/flying) — Qt 小游戏
-- [**data-structure**](https://github.com/ricky-theseus/data-structure) — 数据结构实现
-- [**skill-transparency**](https://github.com/ricky-theseus/skill-transparency)
-- [**QHuffman**](https://github.com/ricky-theseus/QHuffman)
